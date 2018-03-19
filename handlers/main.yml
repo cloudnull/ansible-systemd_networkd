@@ -1,5 +1,5 @@
 ---
-# Copyright 2018, Rackspace US, Inc.
+# Copyright 2018, Logan Vig <logan2211@gmail.com>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,26 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-- name: Delete mount file(s)
-  file:
-    path: "/etc/systemd/system/{{ item.where.strip('/') | replace('/', '-') }}.{{ item.type == 'swap' | ternary('swap', 'mount') }}"
-    state: "absent"
-  when:
-    - item.state | default('unknown') == 'absent'
-  with_items: "{{ systemd_networkds }}"
-  listen: Remove mount
-
-- name: Delete mount target(s)
-  file:
-    path: "{{ item.where }}"
-    state: "absent"
-  when:
-    - item.state | default('unknown') == 'absent'
-  with_items: "{{ systemd_networkds }}"
-  listen: Remove mount
-
-- name: Reload systemd daemon
+- name: Restart systemd-networkd
   systemd:
+    name: "systemd-networkd"
     daemon_reload: yes
-    no_block: yes
-  listen: Remove mount
+    state: restarted
+  when:
+    - systemd_run_networkd | bool
+  tags:
+    - systemd-networkd
